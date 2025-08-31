@@ -1,7 +1,7 @@
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from state import State
-from nodes import extract_company_details, draft_cover_note, send_email_node
+from nodes import extract_company_details, draft_cover_note, send_email_node, draft_subject
 
 def build_graph(checkpointer=None):
     builder = StateGraph(State)
@@ -9,6 +9,7 @@ def build_graph(checkpointer=None):
     # Define Nodes
     builder.add_node("extract_company_details", extract_company_details)
     builder.add_node("draft_cover_note", draft_cover_note)
+    builder.add_node("draft_subject", draft_subject)
     builder.add_node("send_email", send_email_node)
 
     # Set Entry Point
@@ -16,7 +17,8 @@ def build_graph(checkpointer=None):
 
     # Define Edges
     builder.add_edge("extract_company_details", "draft_cover_note")
-    builder.add_edge("draft_cover_note", "send_email")
+    builder.add_edge("draft_cover_note", "draft_subject")
+    builder.add_edge("draft_subject", "send_email")
     builder.add_edge("send_email", END)
 
     return builder.compile(

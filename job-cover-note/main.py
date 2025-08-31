@@ -5,12 +5,14 @@ if __name__ == "__main__":
     # User Input
     jd = open("examples/kimberly-clark.txt").read()
     company_name = "Kimberly-Clark"
-    company_email = "chaitanyadhingra24@gmail.com"
+    recipient_email = "goyal11.gopal@gmail.com"
+    recipient_name = "Gopal"
     applicant_profile = {
         "summary": "ML/AI developer with 2+ years across LLMs, RAG, and AWS; "
                    "built YOLOv8 analytics (~95% accuracy, <500ms latency) and "
                    "document AI (~98% accuracy, 80% manual time reduction).",
-        "top_skills": ["LLMs", "RAG", "LangGraph", "AWS", "Python"]
+        "top_skills": ["LLMs", "RAG", "LangGraph", "AWS", "Python"],
+        "name": "Raju"
     }
 
     graph = build_graph()
@@ -18,7 +20,8 @@ if __name__ == "__main__":
     init_state = {
         "job_description": jd,
         "company_name": company_name,
-        "company_email": company_email,
+        "recipient_email": recipient_email,
+        "recipient_name": recipient_name,
         "applicant_profile": applicant_profile,
         "company_details": [],
         "cover_note": "",
