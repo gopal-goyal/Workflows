@@ -1,0 +1,67 @@
+Full job description
+Job Description
+You were made to do this work: designing new technologies, diving into data, optimizing digital experiences, and constantly developing better, faster ways to get results. You want to be part of a performance culture dedicated to building technology for a purpose that matters. You want to work in an environment that promotes sustainability, inclusion, wellbeing, and career development. In this role, you’ll help us deliver better care for billions of people around the world. It starts with YOU.
+
+In this role, you will:
+
+We’re hiring a Gen AI Engineer to prototype, optimise and integrate LLM-powered Agentic AI solutions for sales, marketing and supply-chain cases. You’ll deliver assistants and tools that plan, reason, access tools and execute tasks—using Azure AI Foundry and modern orchestration frameworks.
+
+Key Responsibilities
+
+Build intelligent systems where LLM-driven agents plan, reason and achieve complex business tasks.
+
+Implement agentic flows with LangChain Agents, LangGraph, Autogen or CrewAI.
+
+Develop RAG & embedding pipelines using Azure AI Foundry and vector search (Pinecone, FAISS, Chroma, Weaviate).
+
+Contribute to solutions in summarisation, personalisation, content automation and decision support.
+
+Ensure logging, evaluation, fine-tuning, versioning and Responsible AI practices.
+
+Collaborate with data, product and engineering peers to embed AI into workflows.
+
+About Us
+
+Huggies®. Kleenex®. Cottonelle®. Scott®. Kotex®. Poise®. Depend®. Kimberly-Clark Professional®. You already know our legendary brands—and so does the rest of the world. In fact, millions of people use Kimberly-Clark products every day. We know these amazing Kimberly-Clark products wouldn’t exist without talented professionals, like you.
+
+At Kimberly-Clark, you’ll be part of the best team committed to driving innovation, growth and impact. We’re founded on more than 150 years of market leadership, and we’re always looking for new and better ways to perform – so there’s your open door of opportunity. It’s all here for you at Kimberly-Clark.
+
+Led by Purpose. Driven by You.
+
+About You
+
+You perform at the highest level possible, and you appreciate a performance culture fueled by authentic caring. You want to be part of a company actively dedicated to sustainability, inclusion, wellbeing, and career development.
+You love what you do, especially when the work you do makes a difference. At Kimberly-Clark, we’re constantly exploring new ideas on how, when, and where we can best achieve results. When you join our team, you’ll experience Flex That Works: flexible (hybrid) work arrangements that empower you to have purposeful time in the office and partner with your leader to make flexibility work for both you and the business.
+
+In one of our technical roles, you’ll focus on winning with consumers and the market, while putting safety, mutual respect, and human dignity at the center. To succeed in this role, you will need the following qualifications:
+
+Python • FastAPI • REST APIs • Prompt engineering • Retrieval-Augmentation
+
+Azure AI Foundry / Azure AI Services • OpenAI & Hugging Face APIs
+
+Agent orchestration (LangChain, LangGraph, Autogen, CrewAI)
+
+Vector DBs (Pinecone, FAISS, Chroma, Weaviate)
+
+Experiment tracking & evaluation tools (Weights & Biases, Prompt Flow)
+
+Soft Skills: Fast learner & highly adaptive • Strong analytical mindset • Team-oriented communicator • Comfortable with ambiguity • Detail-driven documentation • Passion for autonomous AI assistants
+
+Education: Masters or Bachelors in Computer Science, AI, or a related field.
+
+Experience: 5+ years in Gen AI, AI model development, with a focus on generative models.
+
+To Be Considered
+Click the Apply button and complete the online application process. A member of our recruiting team will review your application and follow up if you seem like a great fit for this role.
+
+In the meantime, please check out the careers website.
+
+And finally, the fine print….
+
+For Kimberly-Clark to grow and prosper, we must be an inclusive organization that applies the diverse experiences and passions of its team members to brands that make life better for people all around the world. We actively seek to build a workforce that reflects the experiences of our consumers. When you bring your original thinking to Kimberly-Clark, you fuel the continued success of our enterprise. We are a committed equal opportunity employer, and all qualified applicants will receive consideration for employment without regard to race, color, religion, sex, national origin, disability status, protected veteran status, sexual orientation, gender identity, age, pregnancy, genetic information, citizenship status, or any other characteristic protected by law.
+
+The statements above are intended to describe the general nature and level of work performed by employees assigned to this classification. Statements are not intended to be construed as an exhaustive list of all duties, responsibilities and skills required for this position.
+
+Employment is subject to verification of pre-screening tests, which may include drug screening, background check, and DMV check.
+
+#LI-Hybrid

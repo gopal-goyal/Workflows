@@ -1,0 +1,4 @@
+langgraph
+ollama
+python-dotenv
+secure-smtplib
