@@ -1,114 +1,142 @@
+# nodes.py
 from llm import OllamaLLM
 from emailer import send_email
 import re, json
 
 llm = OllamaLLM(model="llama3.1:latest", temperature=0.3)
 
+def _strip_fences(text: str) -> str:
+    return re.sub(r"^```.*?\n|\n```$", "", text.strip(), flags=re.DOTALL).strip()
+
 def extract_company_details(state):
+    """
+    Input: state["company_details"] as a single rich dict (name, jd, recipient, etc.)
+    Output: state["company_details_enhanced"] = list of {"hook","category"} derived ONLY from the JD
+    """
+    company_details = state.get("company_details", {}) or {}
+
     prompt = f"""
-    Return ONLY a JSON array of 5–7 objects. 
-    Each object should have exactly two fields:
-    - "hook": a short concrete fact about the company **{state['company_name']}**, based ONLY on this job description.
-    - "category": a label for the hook (e.g., "Company Overview", "Culture", "Work Model", "Products").
+    You are given a single object called company_details that contains all information about the target company,
+    including a 'jd' field with the job description text.
 
-    Do NOT wrap in triple backticks or add explanations. 
-    Do NOT include headings like 'Here are…'. Output must be valid JSON only.
+    Return ONLY a JSON array of 5–7 objects.
+    Each object must have exactly two fields:
+    - "hook": a concrete fact extracted STRICTLY from company_details.jd (do not invent)
+    - "category": a short label like "Overview", "Culture", "Work Model", "Products"
 
-    JOB DESCRIPTION:
-    {state['job_description']}
+    Do NOT add prose or code fences. Valid JSON array only.
+
+    company_details:
+    {json.dumps(company_details, ensure_ascii=False)}
     """
 
-    raw = llm.invoke(prompt).strip()
-
-    # Strip accidental markdown code fences
-    raw = re.sub(r"^```.*?\n|\n```$", "", raw, flags=re.DOTALL).strip()
-
+    raw = _strip_fences(llm.invoke(prompt))
     parsed = []
     try:
         data = json.loads(raw)
-
-        # Case 1: correct list of dicts
-        if isinstance(data, list) and all(isinstance(x, dict) for x in data):
-            parsed = [
-                {"hook": str(x.get("hook", "")).strip(),
-                 "category": str(x.get("category", "Other")).strip()}
-                for x in data if x.get("hook")
-            ]
-        # Case 2: list of strings (fallback) → wrap into dicts
-        elif isinstance(data, list) and all(isinstance(x, str) for x in data):
-            parsed = [{"hook": x.strip(), "category": "General"} for x in data if x.strip()]
+        if isinstance(data, list):
+            if all(isinstance(x, dict) for x in data):
+                parsed = [
+                    {"hook": str(x.get("hook", "")).strip(),
+                     "category": str(x.get("category", "Other")).strip()}
+                    for x in data if str(x.get("hook", "")).strip()
+                ]
+            elif all(isinstance(x, str) for x in data):
+                parsed = [{"hook": x.strip(), "category": "General"} for x in data if x.strip()]
     except Exception:
-        # Final fallback: line split
         lines = [l.strip(" -•\t") for l in raw.splitlines() if l.strip()]
         parsed = [{"hook": l, "category": "General"} for l in lines[:7]]
 
-    state["company_details"] = parsed
+    state["company_details_enhanced"] = parsed
     return state
+
 
 def draft_cover_note(state):
+    """
+    Input: full applicant_details dict + full company_details dict
+    Output: state["cover_note"] = email body text only
+    """
+    company_details = state.get("company_details", {}) or {}
+    applicant_details = state.get("applicant_details", {}) or {}
+    hooks = state.get("company_details_enhanced", [])
+
     prompt = f"""
-    You are drafting a professional, concise cover note/email (120–160 words).  
-    Audience: the hiring contact {state['recipient_name']} at {state['company_name']}.  
+    Write the **final email body only** for a job application (120–160 words).
+    
+    Use only information from these objects:
+    - company_details: {json.dumps(company_details, ensure_ascii=False)}
+    - applicant_details: {json.dumps(applicant_details, ensure_ascii=False)}
+    - jd_hooks: {json.dumps(hooks, ensure_ascii=False)}
 
-    Inputs:  
-    - Company JD highlights/hooks: {state['company_details']}  
-    - Applicant profile: {state['applicant_profile']}  
-
-    Rules:  
-    - Start with Hi followed with either hiring team or if the name of a person is provided as the reipient name.
-    - Open with a hook that ties directly to the company JD (avoid generic phrases).  
-    - Use applicant achievements if available; include up to 2 with measurable outcomes (no fabrication).  
-    - If no metrics are in profile, emphasize skills relevant to the JD.  
-    - Keep tone crisp, confident, and professional (avoid fluff).  
-    - Explicitly mention: "I have attached my resume for your review." 
-    - End with a clear next step (short call or referral to formal application).  
-    - Word count: 120–160. 
-    - Output ONLY the body text (no greetings, no “Here is the cover note:”).  
-    - Sign off with “Regards, and extract name present in the applicant_profile”.
-
-    =================== Cover Note ========================
+    Rules:
+    - Start the response DIRECTLY with "Hi <recipient_name or 'Hiring Team'>,"
+    - Do NOT add any introduction like "Here is the cover note" or "Body:".
+    - Open with a JD hook (from jd_hooks) tied directly to the role.
+    - Use up to 2 quantified applicant achievements if available.
+    - Include exactly this line: "I have attached my resume for your review."
+    - End with a clear next step (e.g., short call or referral to formal application).
+    - Finish ONLY with: "Regards," on one line, then applicant_details.name and applicant_details.phone (if provided).
+    - No extra text, no formatting, no markdown, no explanations — just the email body as it would be sent.
     """
 
-    response = llm.invoke(prompt)
-    state["cover_note"] = response.strip()
+    body = _strip_fences(llm.invoke(prompt))
+    state["cover_note"] = body.strip()
     return state
-
 
 
 def draft_subject(state):
+    """
+    Input: full company_details + applicant_details
+    Output: state["email_subject"] (model must extract role & company from the provided objects)
+    """
+    company_details = state.get("company_details", {}) or {}
+    applicant_details = state.get("applicant_details", {}) or {}
+
     prompt = f"""
-    Generate a concise, professional email subject line for a job application.
+    Generate a concise professional email subject line for a job application.
 
     Constraints:
-    Subject line must start with the word "Application".
-    Must include a clear job/role title (either extract from JOB DESCRIPTION or infer/create one based on the description using industry-accepted role names).
-    Must include the company name "{state.get('company_name','')}".
-    Keep it under 80 characters.
-    Avoid generic phrases like "Job", "Request", and avoid repetition.
-    Use a formal tone suitable for professional recruitment communication.
-    Do not include quotes, markdown, or explanations — return only the subject line.
+    - Must start with the word "Application".
+    - Include a clear role title (extract from company_details.jd or infer a standard title from it).
+    - Include the company name (extract from company_details).
+    - Under 80 characters total.
+    - Return ONLY the subject line; no quotes or extra text.
 
-    JOB DESCRIPTION:
-    {state.get('job_description','')}
+    Inputs:
+    - company_details: {json.dumps(company_details, ensure_ascii=False)}
+    - applicant_details: {json.dumps(applicant_details, ensure_ascii=False)}
     """
-    response = llm.invoke(prompt).strip()
-    # Strip any fences or stray characters
-    # subject = re.sub(r"^```.*?\n|\n```$", "", response, flags=re.DOTALL).strip()
-    state["email_subject"] = response
+
+    subject = _strip_fences(llm.invoke(prompt))
+    state["email_subject"] = subject
     return state
 
 
 def send_email_node(state):
+    """
+    Sends the email only if approval == 'approved'.
+    Pulls recipient_email from company_details (single source of truth).
+    """
     print("Sending email...")
+
     if state.get("approval") != "approved":
         state["email_status"] = "skipped"
         return state
 
-    to_address = state["recipient_email"]
-    # ✅ Use subject from draft_subject if available
-    subject = state["email_subject"]
-    body = state["cover_note"]
+    company_details = state.get("company_details", {}) or {}
+    to_address = company_details.get("recipient_email") or ""
+    subject = state.get("email_subject", "").strip()
+    body = state.get("cover_note", "").strip()
 
-    send_email(to_address, subject, body, attachment_path="examples/Gopal_Goyal_Resume.pdf")
-    state["email_status"] = "sent"  
+    if not to_address or not subject or not body:
+        state["email_status"] = "skipped"
+        return state
+
+    send_email(
+        to_address=to_address,
+        subject=subject,
+        body=body,
+        attachment_path="examples/Gopal_Goyal_Resume.pdf"
+    )
+    state["email_status"] = "sent"
     return state
