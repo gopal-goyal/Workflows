@@ -11,12 +11,6 @@ def extract_company_details(state):
     - "hook": a short concrete fact about the company **{state['company_name']}**, based ONLY on this job description.
     - "category": a label for the hook (e.g., "Company Overview", "Culture", "Work Model", "Products").
 
-    Format example:
-    [
-    {{"hook": "Kimberly-Clark is a global brand with 150+ years of history", "category": "Company Overview"}},
-    {{"hook": "Strong focus on sustainability and inclusion", "category": "Culture"}}
-    ]
-
     Do NOT wrap in triple backticks or add explanations. 
     Do NOT include headings like 'Here are…'. Output must be valid JSON only.
 
@@ -53,39 +47,68 @@ def extract_company_details(state):
 
 def draft_cover_note(state):
     prompt = f"""
-    Write a crisp, professional cover note (3–4 sentences) to the hiring contact {state['company_email']} at {state['company_name']}.
-    Use these company hooks from the JD:
-    {state['company_details']}
+    You are drafting a professional, concise cover note/email (120–160 words).  
+    Audience: the hiring contact {state['recipient_name']} at {state['company_name']}.  
 
-    Applicant profile (optional context):
-    {state['applicant_profile']}
-    
-    Constraints:
-    - 120–160 words max.
-    - Open with a specific hook referencing the JD (not generic).
-    - Include 1–2 quantified outcomes from the applicant if present in profile; if none, keep it skill-based, no fabrication.
-    - Close with a clear next step (short call or referral to formal application).
-    Return ONLY the body text.
+    Inputs:  
+    - Company JD highlights/hooks: {state['company_details']}  
+    - Applicant profile: {state['applicant_profile']}  
+
+    Rules:  
+    - Start with Hi followed with either hiring team or if the name of a person is provided as the reipient name.
+    - Open with a hook that ties directly to the company JD (avoid generic phrases).  
+    - Use applicant achievements if available; include up to 2 with measurable outcomes (no fabrication).  
+    - If no metrics are in profile, emphasize skills relevant to the JD.  
+    - Keep tone crisp, confident, and professional (avoid fluff).  
+    - Explicitly mention: "I have attached my resume for your review." 
+    - End with a clear next step (short call or referral to formal application).  
+    - Word count: 120–160. 
+    - Output ONLY the body text (no greetings, no “Here is the cover note:”).  
+    - Sign off with “Regards, and extract name present in the applicant_profile”.
+
+    =================== Cover Note ========================
     """
 
     response = llm.invoke(prompt)
-    state["cover_note"] = response
+    state["cover_note"] = response.strip()
     return state
+
+
+
+def draft_subject(state):
+    prompt = f"""
+    Generate a concise, professional email subject line for a job application.
+
+    Constraints:
+    Subject line must start with the word "Application".
+    Must include a clear job/role title (either extract from JOB DESCRIPTION or infer/create one based on the description using industry-accepted role names).
+    Must include the company name "{state.get('company_name','')}".
+    Keep it under 80 characters.
+    Avoid generic phrases like "Job", "Request", and avoid repetition.
+    Use a formal tone suitable for professional recruitment communication.
+    Do not include quotes, markdown, or explanations — return only the subject line.
+
+    JOB DESCRIPTION:
+    {state.get('job_description','')}
+    """
+    response = llm.invoke(prompt).strip()
+    # Strip any fences or stray characters
+    # subject = re.sub(r"^```.*?\n|\n```$", "", response, flags=re.DOTALL).strip()
+    state["email_subject"] = response
+    return state
+
 
 def send_email_node(state):
     print("Sending email...")
-    # Require approval flag
     if state.get("approval") != "approved":
         state["email_status"] = "skipped"
         return state
 
-    to_address = state["company_email"]
-    # Subject built from first 1–2 hooks if available
-    hooks = state.get("company_details", [])
-    subject_bits = ", ".join([h["hook"] for h in hooks[:2]]) if hooks else state["company_name"]
-    subject = f"Application – {subject_bits}"
+    to_address = state["recipient_email"]
+    # ✅ Use subject from draft_subject if available
+    subject = state["email_subject"]
     body = state["cover_note"]
 
-    send_email(to_address, subject, body)
-    state["email_status"] = "sent"
+    send_email(to_address, subject, body, attachment_path="examples/Gopal_Goyal_Resume.pdf")
+    state["email_status"] = "sent"  
     return state
